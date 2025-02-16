@@ -4,6 +4,7 @@ from typing import TypeAlias
 
 class Provider(StrEnum):
     OPENAI = auto()
+    OCI = auto()
     AZURE_OPENAI = auto()
     DEEPSEEK = auto()
     ANTHROPIC = auto()
@@ -19,6 +20,15 @@ class OpenAIModelName(StrEnum):
 
     GPT_4O_MINI = "gpt-4o-mini"
     GPT_4O = "gpt-4o"
+
+
+class OCIAIModelName(StrEnum):
+    """Oracle Cloud Infrastructure AI model names"""
+
+    OCI_LLAMA_33 = "meta.llama-3.3-70b-instruct"
+    OCI_LLAMA_31 = "meta.llama-3.1-405b-instruct"
+    OCI_COHERE_R = "cohere.command-r-08-2024"
+    OCI_COHERE_RPLUS = "cohere.command-r-plus-08-2024"
 
 
 class AzureOpenAIModelName(StrEnum):
@@ -77,6 +87,7 @@ class FakeModelName(StrEnum):
 
 AllModelEnum: TypeAlias = (
     OpenAIModelName
+    | OCIAIModelName
     | AzureOpenAIModelName
     | DeepseekModelName
     | AnthropicModelName
