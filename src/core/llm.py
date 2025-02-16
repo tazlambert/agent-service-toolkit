@@ -8,6 +8,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 from langchain_ollama import ChatOllama
 from langchain_openai import AzureChatOpenAI, ChatOpenAI
+from langchain_community.chat_models.oci_generative_ai import ChatOCIGenAI
 
 from core.settings import settings
 from schema.models import (
@@ -21,11 +22,16 @@ from schema.models import (
     GroqModelName,
     OllamaModelName,
     OpenAIModelName,
+    OCIAIModelName,
 )
 
 _MODEL_TABLE = {
     OpenAIModelName.GPT_4O_MINI: "gpt-4o-mini",
     OpenAIModelName.GPT_4O: "gpt-4o",
+    OCIAIModelName.OCI_LLAMA_33: "meta.llama-3.3-70b-instruct",
+    OCIAIModelName.OCI_LLAMA_31: "meta.llama-3.1-405b-instruct",
+    OCIAIModelName.OCI_COHERE_R: "cohere.command-r-08-2024",
+    OCIAIModelName.OCI_COHERE_RPLUS: "cohere.command-r-plus-08-2024",
     AzureOpenAIModelName.AZURE_GPT_4O_MINI: settings.AZURE_OPENAI_DEPLOYMENT_MAP.get(
         "gpt-4o-mini", ""
     ),
@@ -44,7 +50,7 @@ _MODEL_TABLE = {
 }
 
 ModelT: TypeAlias = (
-    ChatOpenAI | ChatAnthropic | ChatGoogleGenerativeAI | ChatGroq | ChatBedrock | ChatOllama
+    ChatOpenAI | ChatOCIGenAI | ChatAnthropic | ChatGoogleGenerativeAI | ChatGroq | ChatBedrock | ChatOllama
 )
 
 
@@ -58,6 +64,18 @@ def get_model(model_name: AllModelEnum, /) -> ModelT:
 
     if model_name in OpenAIModelName:
         return ChatOpenAI(model=api_model_name, temperature=0.5, streaming=True)
+    if model_name in OCIAIModelName:
+        if not settings.OCI_CONFIG_PROFILE or not settings.OCI_GENAI_COMPARTMENT_ID or not settings.OCI_GENAI_ENDPOINT:
+            raise ValueError("OCI Config Profile, Compartment ID, and Endpoint must be configured")
+
+        return ChatOCIGenAI(
+            model_id=api_model_name,
+            service_endpoint=settings.OCI_GENAI_ENDPOINT,
+            compartment_id=settings.OCI_GENAI_COMPARTMENT_ID,
+            model_kwargs={"temperature": 0.5, "top_p": 0.75, "max_tokens": 1024},
+            auth_type="API_KEY",
+            auth_profile=settings.OCI_CONFIG_PROFILE,
+        )
     if model_name in AzureOpenAIModelName:
         if not settings.AZURE_OPENAI_API_KEY or not settings.AZURE_OPENAI_ENDPOINT:
             raise ValueError("Azure OpenAI API key and endpoint must be configured")
